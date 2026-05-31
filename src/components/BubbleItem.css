@@ -1,0 +1,9 @@
+.bubble {
+  border-radius: 50%;
+  padding: 20px;
+  background-color: lightblue;
+  cursor: pointer;
+  text-align: center;
+  width: 100px;
+  height: 100px;
+}
