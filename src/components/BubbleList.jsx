@@ -1,5 +1,6 @@
 import { useState } from "react";
 import BubbleItem from "./BubbleItem";
+import "./BubbleList.css"
 
 function BubbleList({ currentNode, enterNode, goBack, addNode, renameNode, deleteNode}) {
   const [newName, setNewName] = useState("")
@@ -10,12 +11,22 @@ function BubbleList({ currentNode, enterNode, goBack, addNode, renameNode, delet
           placeholder="New location..."
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if(e.key === "Enter"){
+              if (!newName.trim()) return;
+              addNode(currentNode.id, newName);
+              setNewName("");
+            }
+          }}
         />
 
         <button onClick={() => {
-          addNode(currentNode.id, newName)
-          setNewName("")
-        }}>
+          if(!newName.trim()) return;
+          console.log("ADDING TO:", currentNode.id, newName);
+          addNode(currentNode.id, newName);
+          setNewName("");
+        }}
+        >
         Add
         </button>
         

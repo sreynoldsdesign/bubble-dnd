@@ -1,6 +1,14 @@
 import {useState} from "react";
+import { useEffect } from "react";
 import Header from "./components/Header";
 import BubbleList from "./components/BubbleList";
+
+import {
+  findNode,
+  addNode,
+  renameNode,
+  deleteNode
+} from "./treeUtils"
 
 function App(){
   const initialData = {
@@ -21,26 +29,28 @@ function App(){
     ]
   }
   
-  const [tree, setTree] = useState(initialData)
+  const [tree, setTree] = useState(()=> {
+    const saved =localStorage.getItem("tree");
+    return saved ? JSON.parse(saved) : initialData;
+  });
   const [currentNodeId, setCurrentNodeId] = useState("world")
   const [history,setHistory] = useState([])
   const currentNode = findNode(tree,currentNodeId);
   
+  useEffect(() => {
+    const saved = localStorage.getItem("tree");
+    if(saved){
+      setTree(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tree",JSON.stringify(tree));
+  }, [tree]);
 
   function enterNode(node) {
     setHistory([...history,currentNodeId])
     setCurrentNodeId(node.id)
-  }
-
-  function findNode(node, id){
-    if(node.id === id) return node;
-
-    for (let child of node.children){
-      const found = findNode(child,id);
-      if (found) return found;
-    }
-
-    return null;
   }
 
   function goBack(){
@@ -51,72 +61,38 @@ function App(){
     setCurrentNodeId(prevId)
   }
 
-  function addNode(parentId, name) {
-    function addRecursive(node){
-      if (node.id === parentId) {
-        return {
-          ...node,
-          children: [
-            ...node.children,
-            {
-              id: crypto.randomUUID(),
-              name,
-              children: []
-            }
-          ]
-        };
-      }
+  function getPath(tree, id, path =[]){
+    if(tree.id === id) return [...path,tree];
 
-      return {
-        ...node,
-        children: node.children.map(addRecursive)
-      };
+    for (let child of tree.children){
+      const result = getPath(child, id, [...path, tree]);
+        if (result) return result;
     }
 
-    setTree(addRecursive(tree));
+    return null;
   }
 
-  function renameNode(id, newName){
-    function update(node){
-      if(node.id === id){
-        return {...node, name: newName};
-      }
-
-      return{
-        ...node,
-        children: node.children.map(update)
-      };
-    }
-
-    setTree(update(tree));
-  }
-
-  function deleteNode(id) {
-    function remove(node) {
-      return {
-        ...node,
-        children: node.children
-          .filter(child => child.id !== id)
-          .map(remove)
-      };
-    }
-
-    setTree(remove(tree));
-  }
+  const path = getPath(tree, currentNodeId);
 
   return(
     <div className="app-container">
       <Header
-
+        path={path}
       />
 
       <BubbleList
         currentNode={currentNode}
         enterNode={enterNode}
         goBack={goBack}
-        addNode={addNode}
-        renameNode={renameNode}
-        deleteNode={deleteNode}
+        addNode={(parentId,name) =>
+          setTree(prev => addNode(prev, parentId, name))
+        }
+        renameNode={(id,newName) =>
+          setTree(prev => renameNode(prev, id, newName))
+        }
+        deleteNode={(id) =>
+          setTree(prev => deleteNode(prev,id))
+        }
       />
     </div>
   );
