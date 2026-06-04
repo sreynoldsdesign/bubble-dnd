@@ -14,14 +14,17 @@ function App(){
   const initialData = {
     id: "world",
     name: "My World",
+    notes: "",
     children: [
       {
         id: "continent1",
         name: "Eldoria",
+        notes: "",
         children: [
           {
             id: "kingdom1",
             name: "Solaris",
+            notes: "",
             children: []
           }
         ]
@@ -36,6 +39,7 @@ function App(){
   const [currentNodeId, setCurrentNodeId] = useState("world")
   const [history,setHistory] = useState([])
   const currentNode = findNode(tree,currentNodeId);
+  const [expanded, setExpanded] = useState({});
   
   useEffect(() => {
     const saved = localStorage.getItem("tree");
@@ -72,6 +76,28 @@ function App(){
     return null;
   }
 
+  function toggleNode(id){
+    setExpanded(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  }
+
+  function updateNodeNotes(id, notes) {
+    function update(node) {
+      if (node.id === id) {
+        return {...node, notes};
+      }
+
+      return {
+        ...node,
+        children: node.children.map(update)
+      };
+    }
+
+    setTree(prev => update(prev));
+  }
+
   const path = getPath(tree, currentNodeId);
 
   return(
@@ -84,6 +110,9 @@ function App(){
         currentNode={currentNode}
         enterNode={enterNode}
         goBack={goBack}
+        expanded={expanded}
+        toggleNode={toggleNode}
+        updateNodeNotes={updateNodeNotes}
         addNode={(parentId,name) =>
           setTree(prev => addNode(prev, parentId, name))
         }
