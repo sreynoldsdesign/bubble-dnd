@@ -40,6 +40,10 @@ function App(){
   const [history,setHistory] = useState([])
   const currentNode = findNode(tree,currentNodeId);
   const [expanded, setExpanded] = useState({});
+  const [pan, setPan] = useState({ x: 0, y:0});
+  const [panning, setPanning] = useState(false);
+  const [startPan, setStartPan] = useState({ x:0, y: 0});
+  const [zoom, setZoom] = useState(1);
   
   useEffect(() => {
     const saved = localStorage.getItem("tree");
@@ -98,6 +102,55 @@ function App(){
     setTree(prev => update(prev));
   }
 
+  function handleMouseDown(e) {
+    if (e.target.closest(".bubble")) return;
+
+    setPanning(true);
+    setStartPan({
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    });
+  }
+
+  function handleMouseMove(e) {
+    if (!panning) return;
+
+    setPan({
+      x: e.clientX - startPan.x,
+      y: e.clientY - startPan.y
+    });
+  }
+
+  function handleMouseUp() {
+    setPanning(false);
+  }
+
+  function updateNodePosition(id, x, y){
+    function update(node) {
+      if (node.id === id){
+        return {...node, x, y};
+      }
+
+      return {
+        ...node,
+        children: node.children.map(update)
+      };
+    }
+
+    setTree(prev => update(prev));
+  }
+
+  function handleWheel(e) {
+    e.preventDefault(e);
+
+    const zoomFactor = 0.1;
+    let newZoom = zoom - e.deltaY * zoomFactor * 0.01;
+
+    newZoom = Math.max(0.5, Math.min(2, newZoom));
+
+    setZoom(newZoom);
+  }
+
   const path = getPath(tree, currentNodeId);
 
   return(
@@ -106,23 +159,28 @@ function App(){
         path={path}
       />
 
-      <BubbleList
-        currentNode={currentNode}
-        enterNode={enterNode}
-        goBack={goBack}
-        expanded={expanded}
-        toggleNode={toggleNode}
-        updateNodeNotes={updateNodeNotes}
-        addNode={(parentId,name) =>
-          setTree(prev => addNode(prev, parentId, name))
-        }
-        renameNode={(id,newName) =>
-          setTree(prev => renameNode(prev, id, newName))
-        }
-        deleteNode={(id) =>
-          setTree(prev => deleteNode(prev,id))
-        }
-      />
+      <div className="canvas-container" onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+        <div className="canvas" style={{transform: `translate(${pan.x}px, ${pan.y}px) scale9${zoom})`}}>
+          <BubbleList
+            currentNode={currentNode}
+            enterNode={enterNode}
+            goBack={goBack}
+            expanded={expanded}
+            toggleNode={toggleNode}
+            updateNodeNotes={updateNodeNotes}
+            updateNodePosition={updateNodePosition}
+            addNode={(parentId,name) =>
+              setTree(prev => addNode(prev, parentId, name))
+            }
+            renameNode={(id,newName) =>
+              setTree(prev => renameNode(prev, id, newName))
+            }
+            deleteNode={(id) =>
+              setTree(prev => deleteNode(prev,id))
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 }

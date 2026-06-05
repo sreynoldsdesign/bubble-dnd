@@ -2,7 +2,7 @@ import { useState } from "react";
 import BubbleItem from "./BubbleItem";
 import "./BubbleList.css"
 
-function BubbleList({ currentNode, enterNode, goBack, expanded, toggleNode, updateNodeNotes, addNode, renameNode, deleteNode}) {
+function BubbleList({ currentNode, enterNode, goBack, expanded, toggleNode, updateNodeNotes, updateNodePosition, addNode, renameNode, deleteNode}) {
   const [newName, setNewName] = useState("")
 
   return (
@@ -35,7 +35,7 @@ function BubbleList({ currentNode, enterNode, goBack, expanded, toggleNode, upda
         )}
         
         {currentNode.children.map(child => (
-        <BubbleItem key={child.id} node={child} onClick={() => enterNode(child)} updateNodeNotes={updateNodeNotes} renameNode={renameNode} deleteNode={deleteNode} expanded={expanded} toggleNode={toggleNode}/>
+        <BubbleItem key={child.id} node={child} updateNodePosition={updateNodePosition} onClick={() => enterNode(child)} updateNodeNotes={updateNodeNotes} renameNode={renameNode} deleteNode={deleteNode} expanded={expanded} toggleNode={toggleNode}/>
         ))}
     </div>
   );

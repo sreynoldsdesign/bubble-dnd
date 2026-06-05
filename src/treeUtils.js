@@ -24,6 +24,8 @@ export function findNode(node, id) {
               id: crypto.randomUUID(),
               name,
               notes: "",
+              x:100,
+              y:100,
               children: []
             }
           ]
