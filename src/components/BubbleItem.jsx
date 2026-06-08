@@ -10,6 +10,8 @@ function BubbleItem({ node, updateNodePosition, onClick, updateNodeNotes, rename
   const [hasMoved, setHasMoved] = useState(false);
   const [startPos, setStartPos] = useState({x:0, y:0});
 
+  console.log("BubbleItem render:", node.id, node.x, node.y);
+
   function handleMouseDown(e){
     e.stopPropagation();
 
@@ -24,7 +26,7 @@ function BubbleItem({ node, updateNodePosition, onClick, updateNodeNotes, rename
     const dx = Math.abs(e.clientX - startPos.x);
     const dy = Math.abs(e.clientY - startPos.y);
 
-    if (dx >5 || dy > 5){
+    if (dx >2 || dy > 2){
       setHasMoved(true);
       updateNodePosition(node.id, e.clientX,e.clientY);
     }
