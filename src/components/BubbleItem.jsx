@@ -1,58 +1,16 @@
 import {useState} from "react";
-import { useEffect } from "react";
 import "./BubbleItem.css";
 
-function BubbleItem({ node, updateNodePosition, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode}) {
+function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode}) {
   const [isEditing,setIsEditing] = useState(false);
   const [name, setName] = useState(node.name);
-  const isExpanded = expanded?.[node.id];
-  const [dragging,setDragging] = useState(false);
-  const [hasMoved, setHasMoved] = useState(false);
-  const [startPos, setStartPos] = useState({x:0, y:0});
-
-  console.log("BubbleItem render:", node.id, node.x, node.y);
-
-  function handleMouseDown(e){
-    e.stopPropagation();
-
-    setDragging(true);
-    setHasMoved(false);
-    setStartPos({ x: e.clientX, y: e.clientY});
-  }
-
-  function handleMouseMove(e){
-    if(!dragging) return;
-
-    const dx = Math.abs(e.clientX - startPos.x);
-    const dy = Math.abs(e.clientY - startPos.y);
-
-    if (dx >2 || dy > 2){
-      setHasMoved(true);
-      updateNodePosition(node.id, e.clientX,e.clientY);
-    }
-  }
-
-  function handleMouseUp() {
-    setDragging(false);
-  }
-
-  useEffect(() => {
-    if (dragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup",handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [dragging]);
+  const isTransitioningNode = transitionNode?.id === node.id;
 
   return (
     <div>
-      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute", left: node.x || 100, top: node.y || 100}} onMouseDown={(e) => {e.stopPropagation(); handleMouseDown(e);}} onClick={() => {
+      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute", left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}} onClick={() => {
         if (isEditing) return;
-        if (hasMoved) return;
+        
         onClick();
       }}
       >

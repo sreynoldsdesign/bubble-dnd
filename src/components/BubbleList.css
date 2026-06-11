@@ -1,8 +1,13 @@
-.bubble-list {
+.bubble-layer {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     position: relative;
     width: 100%;
     height: 80vh;
+    transition: opacity 0.4s ease;
+}
+
+.fade-out{
+    opacity: 0;
 }
