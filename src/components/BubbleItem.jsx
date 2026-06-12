@@ -1,14 +1,14 @@
 import {useState} from "react";
 import "./BubbleItem.css";
 
-function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode}) {
+function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode, startResizing}) {
   const [isEditing,setIsEditing] = useState(false);
   const [name, setName] = useState(node.name);
   const isTransitioningNode = transitionNode?.id === node.id;
 
   return (
     <div>
-      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute", left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}} onClick={() => {
+      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute",width: node.size || 120, height: node.size || 120, left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}} onClick={() => {
         if (isEditing) return;
         
         onClick();
@@ -30,32 +30,33 @@ function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, ex
               <span className="bubble-title">
                 {node.name}
               </span>
-
-              <button onClick={(e) => {
-                e.stopPropagation();
-                toggleNode(node.id);
-              }}>
-                {expanded?.[node.id] ? "▲":"▼"}
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
+              <div className="resize-handle" onMouseDown={(e) => {e.stopPropagation(); startResizing(e,node);}}></div>
+              <div className="bubble-actions">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
                 >
                   ✏️
-                  </button>
+                </button>
 
-              <button
-                onClick={(e) => {
+                <button onClick={(e) => {
                   e.stopPropagation();
-                  deleteNode(node.id);
-                }}
+                  toggleNode(node.id);
+                }}>
+                  {expanded?.[node.id] ? "▲":"▼"}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteNode(node.id);
+                  }}
                 >
                   🗑
-                  </button>
-
+                </button>
+              </div>
                   {expanded?.[node.id] && (
                   <textarea
                     className="bubble-notes"

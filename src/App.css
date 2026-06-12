@@ -1,9 +1,9 @@
 .canvas-container {
-  width: 100vw;
-  height: 100vh;
   overflow: hidden;
   cursor: grab;
-  position: fixed;
+  flex: 1;
+  position: absolute;
+  inset: 0;
   z-index: 0;
 }
 
@@ -18,4 +18,49 @@
   position: absolute;
   top: 0;
   left: 0;
+}
+
+.app-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  pointer-events: none;
+}
+
+.header-center{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-path {
+  position:absolute;
+  left: 16px;
+}
+
+.controls{
+  position: absolute;
+  top: 60px;
+  left: 16px;
+
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  z-index: 10;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
 }

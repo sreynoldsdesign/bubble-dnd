@@ -14,13 +14,48 @@ import {
 
 function App(){
   
+  const initialData = {
+   
+    id: "world",
+    name: "My World",
+    notes: "",
+    x:100,
+    y:100,
+    size: 120,
+    children: [
+      {
+        id: "continent1",
+        name: "Eldoria",
+        notes: "",
+        x:100,
+        y:100,
+        size: 120,
+        children: [
+          {
+            id: "kingdom1",
+            name: "Solaris",
+            notes: "",
+            x:100,
+            y:100,
+            size: 120,
+            children: []
+          }
+        ]
+      }
+    ]
+  }
   const [tree, setTree] = useState(()=> {
-    const saved =localStorage.getItem("tree");
-    return saved ? JSON.parse(saved) : initialData;
+    try {
+      const saved = localStorage.getItem("tree");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed?.id ? parsed : initialData;
+    } catch {
+      return initialData;
+    }
   });
-  const [currentNodeId, setCurrentNodeId] = useState("world")
-  const [history,setHistory] = useState([])
-  const currentNode = findNode(tree,currentNodeId);
+  const [currentNodeId, setCurrentNodeId] = useState("world");
+  const [history,setHistory] = useState([]);
+  const currentNode = findNode(tree,currentNodeId) || tree;
   const [expanded, setExpanded] = useState({});
   const [pan, setPan] = useState({ x: 0, y:0});
   const [panning, setPanning] = useState(false);
@@ -33,28 +68,9 @@ function App(){
   const [transitionNode, setTransitionNode] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentNodes, setCurrentNodes] = useState([]);
+  const [resizingNode, setResizingNode] = useState(null);
+  const [resizeStart, setResizeStart] = useState({x:0, y: 0, size: 0});
   
-  const initialData = {
-   
-    id: "world",
-    name: "My World",
-    notes: "",
-    children: [
-      {
-        id: "continent1",
-        name: "Eldoria",
-        notes: "",
-        children: [
-          {
-            id: "kingdom1",
-            name: "Solaris",
-            notes: "",
-            children: []
-          }
-        ]
-      }
-    ]
-  }
 
   const screenToWorld = (x , y) => {
     return {
@@ -68,7 +84,7 @@ function App(){
   const path = getPath(tree, currentNodeId);
 
   useEffect(() => {
-    
+    if (!tree?.id) return;
     localStorage.setItem("tree",JSON.stringify(tree));
   }, [tree]);
 
@@ -86,7 +102,7 @@ function App(){
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [panning, startPan, draggingNode, dragOffset, pan, zoom]);
+  }, [panning, startPan, draggingNode, dragOffset, pan, zoom, resizingNode, resizeStart]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -146,7 +162,9 @@ function App(){
     }, 400);
   
     setTimeout(() => {
-      setIsTransitioning(false);
+      setIsTransitioning(false)
+      setPan({ x:0, y:0});
+      setZoom(1);
     }, 700);
   }
   
@@ -200,6 +218,19 @@ function App(){
   }
 
   function handleMouseMove(e) {
+    if (resizingNode) {
+      const world = screenToWorld(e.clientX, e.clientY);
+    
+      const dx = world.x - resizeStart.x;
+      const dy = world.y - resizeStart.y;
+    
+      const dist = Math.max(dx, dy);
+    
+      updateNodeSize(resizingNode, Math.max(60, resizeStart.size + dist));
+    
+      return;
+    }
+    
     if(draggingNode){
       const world = screenToWorld(e.clientX, e.clientY);
 
@@ -223,6 +254,7 @@ function App(){
   function handleMouseUp() {
     setPanning(false);
     setDraggingNode(null);
+    setResizingNode(null);
   }
 
   function updateNodePosition(id, x, y){
@@ -335,12 +367,44 @@ function App(){
     setTimeout(() => {
       setTransitionNode(null);
       setIsTransitioning(false);
+      setPan({ x:0, y:0});
+      setZoom(1);
     }, 700);
+  }
+
+  function startResizing(e, node) {
+    if(resizingNode) return;
+    
+    e.stopPropagation();
+
+    const world = screenToWorld(e.clientX, e.clientY);
+
+    setResizingNode(node.id);
+    setResizeStart({
+      x: world.x,
+      y: world.y,
+      size: node.size || 120
+    });
+  }
+
+  function updateNodeSize(id, size){
+    function update(node) {
+      if(node.id === id) {
+        return {...node, size};
+      }
+
+      return{
+        ...node,
+        children: node.children.map(update)
+      };
+    }
+
+    setTree(prev => update(prev));
   }
 
   return(
     <div className="app-container">
-      <Header
+      <Header 
         path={path}
       />
 
@@ -384,6 +448,7 @@ function App(){
             updateNodeNotes={updateNodeNotes}
             updateNodePosition={updateNodePosition}
             startDraggingNode={startDraggingNode}
+            startResizing={startResizing}
             renameNode={(id,newName) =>
               setTree(prev => renameNode(prev, id, newName))
             }

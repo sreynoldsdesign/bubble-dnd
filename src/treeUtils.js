@@ -26,6 +26,7 @@ export function findNode(node, id) {
               notes: "",
               x:100,
               y:100,
+              size: 120,
               children: []
             }
           ]
