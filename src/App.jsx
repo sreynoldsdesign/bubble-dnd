@@ -70,6 +70,7 @@ function App(){
   const [currentNodes, setCurrentNodes] = useState([]);
   const [resizingNode, setResizingNode] = useState(null);
   const [resizeStart, setResizeStart] = useState({x:0, y: 0, size: 0});
+  const [justResized, setJustResized] = useState(false);
   
 
   const screenToWorld = (x , y) => {
@@ -224,9 +225,16 @@ function App(){
       const dx = world.x - resizeStart.x;
       const dy = world.y - resizeStart.y;
     
-      const dist = Math.max(dx, dy);
+      const delta = (dx +dy) * 0.5;
     
-      updateNodeSize(resizingNode, Math.max(60, resizeStart.size + dist));
+      const newSize = Math.max(60, Math.min(300, resizeStart.size + delta));
+      updateNodeSizeAndPosition(resizingNode, newSize);
+
+      setResizeStart({
+        x: world.x,
+        y: world.y,
+        size: newSize
+      });
     
       return;
     }
@@ -253,8 +261,15 @@ function App(){
 
   function handleMouseUp() {
     setPanning(false);
-    setDraggingNode(null);
     setResizingNode(null);
+
+    setTimeout(() => {
+      setJustResized(false);
+    }, 50);
+
+    setTimeout(() => {
+      setDraggingNode(null);
+    }, 50);
   }
 
   function updateNodePosition(id, x, y){
@@ -320,7 +335,9 @@ function App(){
   }
 
   function handleEnterNode(node) {
-    
+    if (justResized) return;
+    if(draggingNode) return;
+
     setIsTransitioning(true);
     
     const nodeX = node.x || 100;
@@ -380,6 +397,8 @@ function App(){
     const world = screenToWorld(e.clientX, e.clientY);
 
     setResizingNode(node.id);
+    setJustResized(true);
+
     setResizeStart({
       x: world.x,
       y: world.y,
@@ -387,10 +406,26 @@ function App(){
     });
   }
 
-  function updateNodeSize(id, size){
+  function goToNode(nodeId) {
+    setCurrentNodeId(nodeId);
+    setHistory(prev => {
+      const index = prev.indexOf(nodeId);
+      return index !== -1 ? prev.slice(0, index) : prev;
+    });
+  }
+
+  function updateNodeSizeAndPosition(id, newSize){
     function update(node) {
       if(node.id === id) {
-        return {...node, size};
+        const oldSize = node.size || 120;
+        const delta = (newSize - oldSize) /2;
+
+        return {
+          ...node,
+          size: newSize,
+          x: (node.x || 100) - delta,
+          y: (node.y || 100) - delta
+        };
       }
 
       return{
@@ -406,6 +441,7 @@ function App(){
     <div className="app-container">
       <Header 
         path={path}
+        goToNode={goToNode}
       />
 
       <div className="controls">
