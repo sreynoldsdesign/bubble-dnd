@@ -1,19 +1,14 @@
 import {useState} from "react";
 import "./BubbleItem.css";
 
-function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode, startResizing}) {
+function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode, startResizing,}) {
   const [isEditing,setIsEditing] = useState(false);
   const [name, setName] = useState(node.name);
   const isTransitioningNode = transitionNode?.id === node.id;
 
   return (
     <div>
-      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute",width: node.size || 120, height: node.size || 120, left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}} onClick={() => {
-        if (isEditing) return;
-        
-        onClick();
-      }}
-      >
+      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute",width: node.size || 120, height: node.size || 120, left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}}>
           {isEditing ? (
             <input
               value={name}

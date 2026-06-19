@@ -11,6 +11,7 @@ import {
   renameNode,
   deleteNode
 } from "./treeUtils"
+import useCanvasInteraction from "./hooks/useCanvasInteraction";
 
 function App(){
   
@@ -58,27 +59,25 @@ function App(){
   const currentNode = findNode(tree,currentNodeId) || tree;
   const [expanded, setExpanded] = useState({});
   const [pan, setPan] = useState({ x: 0, y:0});
-  const [panning, setPanning] = useState(false);
-  const [startPan, setStartPan] = useState({ x:0, y: 0});
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef(null);
   const [newName, setNewName] = useState("");
-  const [draggingNode, setDraggingNode] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0});
   const [transitionNode, setTransitionNode] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentNodes, setCurrentNodes] = useState([]);
-  const [resizingNode, setResizingNode] = useState(null);
-  const [resizeStart, setResizeStart] = useState({x:0, y: 0, size: 0});
-  const [justResized, setJustResized] = useState(false);
-  
-
-  const screenToWorld = (x , y) => {
-    return {
-      x: (x - pan.x) / zoom,
-      y: (y - pan.y) / zoom
-    };
-  };
+  const {
+    handleMouseDown,
+    startDraggingNode,
+    startResizing
+  } = useCanvasInteraction({
+    pan,
+    setPan,
+    zoom,
+    setZoom,
+    updateNodePosition,
+    updateNodeSizeAndPosition,
+    onNodeClick: handleEnterNode
+  });
 
   const nodesToRender = isTransitioning ? currentNodes : (currentNode?.children || []);
 
@@ -94,16 +93,6 @@ function App(){
       setCurrentNodes(currentNode.children || []);
     }
   }, [currentNodeId, isTransitioning, currentNode]);
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [panning, startPan, draggingNode, dragOffset, pan, zoom, resizingNode, resizeStart]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -207,71 +196,6 @@ function App(){
     setTree(prev => update(prev));
   }
 
-  function handleMouseDown(e) {
-    
-    if (e.target.closest(".bubble")) return;
-
-    setPanning(true);
-    setStartPan({
-      x: e.clientX - pan.x,
-      y: e.clientY - pan.y
-    });
-  }
-
-  function handleMouseMove(e) {
-    if (resizingNode) {
-      const world = screenToWorld(e.clientX, e.clientY);
-    
-      const dx = world.x - resizeStart.x;
-      const dy = world.y - resizeStart.y;
-    
-      const delta = (dx +dy) * 0.5;
-    
-      const newSize = Math.max(60, Math.min(300, resizeStart.size + delta));
-      updateNodeSizeAndPosition(resizingNode, newSize);
-
-      setResizeStart({
-        x: world.x,
-        y: world.y,
-        size: newSize
-      });
-    
-      return;
-    }
-    
-    if(draggingNode){
-      const world = screenToWorld(e.clientX, e.clientY);
-
-      updateNodePosition(
-        draggingNode,
-        world.x - dragOffset.x,
-        world.y - dragOffset.y
-      );
-      
-      return;
-    }
-
-    if (!panning) return;
-
-    setPan({
-      x: e.clientX - startPan.x,
-      y: e.clientY - startPan.y
-    });
-  }
-
-  function handleMouseUp() {
-    setPanning(false);
-    setResizingNode(null);
-
-    setTimeout(() => {
-      setJustResized(false);
-    }, 50);
-
-    setTimeout(() => {
-      setDraggingNode(null);
-    }, 50);
-  }
-
   function updateNodePosition(id, x, y){
     function update(node) {
       if (node.id === id){
@@ -298,19 +222,6 @@ function App(){
     setZoom(newZoom);
   }
 
-  function startDraggingNode(e, node) {
-    e.stopPropagation();
-
-    const world = screenToWorld(e.clientX, e.clientY);
-
-    setDraggingNode(node.id);
-
-    setDragOffset({
-      x: world.x - (node.x || 100),
-      y: world.y - (node.y || 100)
-    });
-  }
-
   function getNodesCenter(nodes) {
     if(!nodes || nodes.length === 0) return {x:0, y:0};
 
@@ -335,9 +246,7 @@ function App(){
   }
 
   function handleEnterNode(node) {
-    if (justResized) return;
-    if(draggingNode) return;
-
+    if(!node) return;
     setIsTransitioning(true);
     
     const nodeX = node.x || 100;
@@ -387,23 +296,6 @@ function App(){
       setPan({ x:0, y:0});
       setZoom(1);
     }, 700);
-  }
-
-  function startResizing(e, node) {
-    if(resizingNode) return;
-    
-    e.stopPropagation();
-
-    const world = screenToWorld(e.clientX, e.clientY);
-
-    setResizingNode(node.id);
-    setJustResized(true);
-
-    setResizeStart({
-      x: world.x,
-      y: world.y,
-      size: node.size || 120
-    });
   }
 
   function goToNode(nodeId) {
