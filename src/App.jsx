@@ -65,6 +65,7 @@ function App(){
   const [transitionNode, setTransitionNode] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentNodes, setCurrentNodes] = useState([]);
+  const [dragPreview, setDragPreview] = useState(null);
   const {
     handleMouseDown,
     startDraggingNode,
@@ -76,7 +77,8 @@ function App(){
     setZoom,
     updateNodePosition,
     updateNodeSizeAndPosition,
-    onNodeClick: handleEnterNode
+    onNodeClick: handleEnterNode,
+    setDragPreview
   });
 
   const nodesToRender = isTransitioning ? currentNodes : (currentNode?.children || []);
@@ -377,6 +379,7 @@ function App(){
             updateNodePosition={updateNodePosition}
             startDraggingNode={startDraggingNode}
             startResizing={startResizing}
+            dragPreview={dragPreview}
             renameNode={(id,newName) =>
               setTree(prev => renameNode(prev, id, newName))
             }

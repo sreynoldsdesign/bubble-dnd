@@ -7,7 +7,8 @@ export default function useCanvasInteraction({
     setZoom,
     updateNodePosition,
     updateNodeSizeAndPosition,
-    onNodeClick
+    onNodeClick,
+    setDragPreview
 }) {
   
 
@@ -24,7 +25,8 @@ export default function useCanvasInteraction({
         start: null,
         offset: null,
         size: null,
-        moved: false
+        moved: false,
+        lastPosition: null
     });
 
     const screenToWorld = (x, y) => {
@@ -52,6 +54,8 @@ export default function useCanvasInteraction({
     }
 
     function handleMouseMove(e) {
+       if(modeRef.current=== MODE.IDLE) return;
+       
         const {start, offset} = interactionRef.current;
 
         if (modeRef.current === MODE.PRESSING_NODE) {
@@ -82,8 +86,14 @@ export default function useCanvasInteraction({
             
             const world = screenToWorld(e.clientX, e.clientY);
 
-            interactionRef.current.latestWorld = world;
-            return;
+            const { nodeId, offset} = interactionRef.current;
+
+            const x = world.x - offset.x;
+            const y = world.y - offset.y;
+
+            interactionRef.current.lastPosition = {x,y};
+
+            setDragPreview({nodeId,x,y});
         }
 
         if (modeRef.current === MODE.RESIZING_NODE) {
@@ -105,12 +115,14 @@ export default function useCanvasInteraction({
 
         console.log("MOUSE UP MODE:", modeRef.current);
         if (modeRef.current === MODE.DRAGGING_NODE) {
-            updateNodePosition(
-              interactionRef.current.nodeId,
-              interactionRef.current.latestWorld.x,
-              interactionRef.current.latestWorld.y
-            );
-          }
+            const {nodeId, lastPosition} = interactionRef.current;
+
+            if(nodeId && lastPosition) {
+                updateNodePosition(nodeId, lastPosition.x, lastPosition.y);
+            }
+
+            setDragPreview(null);
+        }
         
         if(modeRef.current === MODE.PRESSING_NODE && interactionRef.current.node) {
             onNodeClick?.(interactionRef.current.node);

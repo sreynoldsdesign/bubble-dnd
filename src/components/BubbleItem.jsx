@@ -1,14 +1,21 @@
 import {useState} from "react";
 import "./BubbleItem.css";
 
-function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode, startResizing,}) {
+function BubbleItem({ node, onClick, updateNodeNotes, dragPreview, renameNode, deleteNode, expanded, toggleNode, startDraggingNode, transitionNode, startResizing,}) {
   const [isEditing,setIsEditing] = useState(false);
   const [name, setName] = useState(node.name);
   const isTransitioningNode = transitionNode?.id === node.id;
 
+  const preview = dragPreview?.nodeId === node.id
+    ? dragPreview
+    : null;
+  
+  const x = preview?.x ?? node.x ?? 100;
+  const y = preview?.y ?? node.y ?? 100;
+
   return (
     <div>
-      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute",width: node.size || 120, height: node.size || 120, left: node.x || 100, top: node.y || 100, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.4s ease"}} onMouseDown={(e) => {startDraggingNode(e, node);}}>
+      <div className={`bubble ${expanded?.[node.id] ? "expanded" : ""}`} style={{position: "absolute",width: node.size || 120, height: node.size || 120, transform: isTransitioningNode ? "scale(1.5)":"scale(1)", transition: "transform 0.1s linear", left: x, top: y}} onMouseDown={(e) => {startDraggingNode(e, node);}}>
           {isEditing ? (
             <input
               value={name}
@@ -28,6 +35,7 @@ function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, ex
               <div className="resize-handle" onMouseDown={(e) => {e.stopPropagation(); startResizing(e,node);}}></div>
               <div className="bubble-actions">
                 <button
+                  onMouseDown={(e)=>e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditing(true);
@@ -36,7 +44,7 @@ function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, ex
                   ✏️
                 </button>
 
-                <button onClick={(e) => {
+                <button onMouseDown={(e)=>e.stopPropagation()} onClick={(e) => {
                   e.stopPropagation();
                   toggleNode(node.id);
                 }}>
@@ -44,6 +52,7 @@ function BubbleItem({ node, onClick, updateNodeNotes, renameNode, deleteNode, ex
                 </button>
 
                 <button
+                  onMouseDown={(e)=>e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteNode(node.id);
