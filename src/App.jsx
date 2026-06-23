@@ -87,7 +87,11 @@ function App(){
 
   useEffect(() => {
     if (!tree?.id) return;
+    const timeout = setTimeout(() => {
     localStorage.setItem("tree",JSON.stringify(tree));
+    }, 300);
+
+    return () => clearTimeout(timeout);
   }, [tree]);
 
   useEffect(() => {

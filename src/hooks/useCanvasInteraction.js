@@ -40,6 +40,8 @@ export default function useCanvasInteraction({
     function handleMouseDown(e) {
         if (e.target.closest(".bubble")) return;
 
+        setUserSelectDisabled(true);
+
         modeRef.current = MODE.PANNING;
     
         interactionRef.current.start = {
@@ -113,6 +115,8 @@ export default function useCanvasInteraction({
 
     function handleMouseUp() {
 
+        setUserSelectDisabled(false);
+        
         console.log("MOUSE UP MODE:", modeRef.current);
         if (modeRef.current === MODE.DRAGGING_NODE) {
             const {nodeId, lastPosition} = interactionRef.current;
@@ -142,6 +146,8 @@ export default function useCanvasInteraction({
 
     function startDraggingNode(e, node) {
         e.stopPropagation();
+
+        setUserSelectDisabled(true);
     
         modeRef.current = MODE.PRESSING_NODE;
 
@@ -179,6 +185,10 @@ export default function useCanvasInteraction({
         interactionRef.current.nodeId = node.id;
         interactionRef.current.start = world;
         interactionRef.current.size = node.size || 120;
+    }
+
+    function setUserSelectDisabled(disabled) {
+        document.body.style.userSelect = disabled ? "none" : "";
     }
 
     const handlersRef = useRef();
